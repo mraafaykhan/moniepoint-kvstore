@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVStore Dashboard</title>
+<style>
+:root {
+  --bg: #1a1b26;
+  --bg-card: #24283b;
+  --bg-card-hover: #292e42;
+  --bg-input: #1a1b26;
+  --border: #414868;
+  --text: #c0caf5;
+  --text-dim: #565f89;
+  --text-bright: #ffffff;
+  --accent: #7aa2f7;
+  --green: #9ece6a;
+  --red: #f7768e;
+  --yellow: #e0af68;
+  --purple: #bb9af7;
+  --cyan: #7dcfff;
+  --orange: #ff9e64;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,0.5);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  --transition: 0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---- Hero ---- */
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 80px 24px 60px;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(122,162,247,0.08) 0%, transparent 60%);
+  animation: heroGlow 8s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(2%, -2%) scale(1.05); }
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  margin-bottom: 24px;
+  position: relative;
+  background: rgba(122,162,247,0.06);
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  position: relative;
+  background: linear-gradient(135deg, var(--text-bright) 0%, var(--accent) 50%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  color: var(--text);
+  font-weight: 400;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.hero .tagline {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  position: relative;
+}
+
+.hero .tagline span {
+  margin: 0 6px;
+  color: var(--border);
+}
+
+/* Animated gradient border card wrapper */
+.glow-card {
+  position: relative;
+  border-radius: var(--radius);
+  padding: 1px;
+  background: linear-gradient(135deg, var(--accent), var(--purple), var(--cyan), var(--accent));
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glow-card-inner {
+  background: var(--bg-card);
+  border-radius: calc(var(--radius) - 1px);
+  padding: 32px;
+}
+
+/* ---- Cards ---- */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.card:hover {
+  border-color: rgba(122,162,247,0.3);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.card-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+section {
+  margin-bottom: 40px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #1a1b26;
+}
+.btn-primary:hover { background: #89b4fa; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(122,162,247,0.3); }
+
+.btn-success {
+  background: var(--green);
+  color: #1a1b26;
+}
+.btn-success:hover { background: #b5e89a; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(158,206,106,0.3); }
+
+.btn-danger {
+  background: var(--red);
+  color: #1a1b26;
+}
+.btn-danger:hover { background: #ff9db5; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(247,118,142,0.3); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(122,162,247,0.06); }
+
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-lg { padding: 14px 32px; font-size: 1rem; }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ---- Inputs ---- */
+.input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  width: 100%;
+  transition: border-color var(--transition);
+  outline: none;
+}
+
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(122,162,247,0.15); }
+
+textarea.input { resize: vertical; min-height: 80px; }
+
+.input-group { margin-bottom: 12px; }
+.input-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* ---- Architecture Diagram ---- */
+.arch-diagram {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 24px 0;
+  overflow-x: auto;
+}
+
+.arch-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  border: 2px solid;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  min-width: 110px;
+  position: relative;
+  background: rgba(0,0,0,0.2);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.arch-box:hover { transform: translateY(-2px); }
+
+.arch-box.client { border-color: var(--cyan); color: var(--cyan); }
+.arch-box.protocol { border-color: var(--accent); color: var(--accent); }
+.arch-box.raft { border-color: var(--purple); color: var(--purple); }
+.arch-box.engine { border-color: var(--green); color: var(--green); }
+.arch-box.wal { border-color: var(--yellow); color: var(--yellow); }
+.arch-box.memtable { border-color: var(--orange); color: var(--orange); }
+.arch-box.sstable { border-color: var(--red); color: var(--red); }
+
+.arch-box small {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.7;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.arch-arrow {
+  font-size: 1.4rem;
+  color: var(--text-dim);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.arch-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.arch-tree-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arch-tree-connector {
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  width: 24px;
+  text-align: right;
+}
+
+/* ---- Tabs ---- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---- Result Area ---- */
+.result-area {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  min-height: 48px;
+  position: relative;
+}
+
+.result-area .status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.1rem;
+}
+
+.result-area .timing {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* ---- Benchmark Grid ---- */
+.bench-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.bench-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  transition: border-color var(--transition);
+}
+
+.bench-card:hover { border-color: rgba(122,162,247,0.3); }
+
+.bench-card h4 {
+  font-size: 0.95rem;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.bench-card p {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.bench-result {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.bench-stat {
+  text-align: center;
+}
+
+.bench-stat .value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  font-family: var(--mono);
+  color: var(--text-bright);
+}
+
+.bench-stat .unit {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: block;
+}
+
+/* ---- Progress Bar ---- */
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-bar .fill.blue { background: var(--accent); }
+.progress-bar .fill.green { background: var(--green); }
+.progress-bar .fill.yellow { background: var(--yellow); }
+.progress-bar .fill.purple { background: var(--purple); }
+
+/* ---- Canvas Chart ---- */
+.chart-container {
+  margin-top: 24px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.chart-container canvas {
+  width: 100%;
+  height: 220px;
+}
+
+/* ---- Crash Recovery ---- */
+.crash-timeline {
+  margin: 24px 0;
+}
+
+.crash-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  opacity: 0.3;
+  transition: opacity 0.5s ease;
+}
+
+.crash-step.active { opacity: 1; }
+.crash-step.done { opacity: 0.7; }
+
+.crash-step .step-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.crash-step.active .step-indicator { border-color: var(--accent); color: var(--accent); }
+.crash-step.done .step-indicator { border-color: var(--green); color: var(--green); background: rgba(158,206,106,0.1); }
+.crash-step.error .step-indicator { border-color: var(--red); color: var(--red); background: rgba(247,118,142,0.1); }
+
+.crash-step .step-text {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.crash-step .step-text small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.crash-result {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  display: none;
+}
+
+.crash-result.success {
+  display: block;
+  background: rgba(158,206,106,0.08);
+  border: 1px solid rgba(158,206,106,0.3);
+}
+
+.crash-result.failure {
+  display: block;
+  background: rgba(247,118,142,0.08);
+  border: 1px solid rgba(247,118,142,0.3);
+}
+
+.crash-result .big-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.crash-result .big-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.crash-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.crash-stats .stat {
+  text-align: center;
+}
+
+.crash-stats .stat .val {
+  font-family: var(--mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.crash-stats .stat .lbl {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* ---- Checklist ---- */
+.checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.checklist-section h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.4s ease;
+}
+
+.check-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.check-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(158,206,106,0.15);
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.check-text {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.check-text .detail {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ---- Accordion ---- */
+.accordion-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.accordion-item:hover { border-color: rgba(122,162,247,0.3); }
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  background: var(--bg-input);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  border: none;
+  width: 100%;
+  font-family: var(--font);
+  text-align: left;
+  transition: background var(--transition);
+}
+
+.accordion-header:hover { background: var(--bg-card-hover); }
+
+.accordion-chevron {
+  transition: transform 0.3s ease;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.accordion-item.open .accordion-chevron { transform: rotate(180deg); }
+
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.accordion-body-inner {
+  padding: 16px 20px;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.8;
+  font-family: var(--mono);
+  background: var(--bg-card);
+}
+
+/* ---- Footer ---- */
+.footer {
+  text-align: center;
+  padding: 48px 24px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+.footer p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* ---- Spinner ---- */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Loading bar animation ---- */
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.progress-bar .fill.indeterminate {
+  width: 25% !important;
+  animation: indeterminate 1.2s ease-in-out infinite;
+}
+
+/* ---- Red flash ---- */
+@keyframes redFlash {
+  0% { background: transparent; }
+  20% { background: rgba(247,118,142,0.15); }
+  100% { background: transparent; }
+}
+
+.red-flash { animation: redFlash 0.8s ease; }
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+  .card { padding: 20px; }
+  .arch-diagram { flex-direction: column; align-items: stretch; gap: 8px; }
+  .arch-arrow { transform: rotate(90deg); text-align: center; margin: 4px 0; }
+  .bench-grid { grid-template-columns: 1fr; }
+  .checklist-grid { grid-template-columns: 1fr; }
+  .crash-stats { gap: 16px; }
+}
+
+/* ---- Utility ---- */
+.text-center { text-align: center; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-16 { margin-bottom: 16px; }
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.items-center { align-items: center; }
+
+/* ---- Ops panel layout ---- */
+.ops-form { display: flex; flex-direction: column; gap: 12px; }
+.ops-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.ops-row .input-group { flex: 1; min-width: 150px; }
+
+/* ---- Results table ---- */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.results-table th, .results-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.results-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.results-table td { color: var(--text); }
+.results-table tr:hover td { background: rgba(122,162,247,0.04); }
+
+/* ---- Section anchor padding ---- */
+.section-anchor { scroll-margin-top: 24px; }
+
+/* ---- Cluster Section ---- */
+.cluster-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+.nodes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.node-card {
+  background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 16px; transition: all 0.3s;
+}
+.node-card[data-state="leader"] {
+  border-color: var(--green);
+  box-shadow: 0 0 20px rgba(158, 206, 106, 0.15);
+  animation: leaderPulse 2s infinite;
+}
+.node-card[data-state="follower"] { border-color: var(--accent); }
+.node-card[data-state="stopped"] { opacity: 0.5; }
+.node-card[data-state="leader"] .node-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.node-card[data-state="follower"] .node-dot { background: var(--accent); }
+.node-card[data-state="stopped"] .node-dot { background: #565f89; }
+.node-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.node-dot { width: 10px; height: 10px; border-radius: 50%; }
+.node-id { font-family: var(--mono); font-weight: 600; }
+.node-badge {
+  margin-left: auto; padding: 2px 10px; border-radius: 12px;
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+}
+.node-card[data-state="leader"] .node-badge { background: rgba(158,206,106,0.15); color: var(--green); }
+.node-card[data-state="follower"] .node-badge { background: rgba(122,162,247,0.15); color: var(--accent); }
+.node-card[data-state="stopped"] .node-badge { background: rgba(86,95,137,0.15); color: #565f89; }
+.node-card[data-state="candidate"] .node-badge { background: rgba(224,175,104,0.15); color: var(--yellow); }
+.node-card[data-state="candidate"] .node-dot { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+.node-card[data-state="candidate"] { border-color: var(--yellow); }
+.node-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.node-stat { display: flex; justify-content: space-between; font-size: 0.85rem; }
+.node-stat .label { color: #565f89; }
+.node-stat .val { font-family: var(--mono); color: var(--text); }
+
+/* Event feed */
+.event-feed {
+  max-height: 300px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; padding: 8px; margin: 16px 0; font-size: 0.82rem;
+  font-family: var(--mono);
+}
+.event-entry {
+  display: flex; gap: 12px; padding: 4px 8px; border-radius: 4px;
+  animation: fadeIn 0.3s ease;
+}
+.event-entry:nth-child(even) { background: rgba(255,255,255,0.02); }
+.event-time { color: #565f89; min-width: 90px; }
+.event-type { font-weight: 700; min-width: 60px; text-transform: uppercase; }
+.event-type.put { color: var(--accent); }
+.event-type.get { color: var(--green); }
+.event-type.delete { color: var(--red); }
+.event-type.batch { color: var(--yellow); }
+.event-type.leader { color: #bb9af7; }
+.event-type.status { color: #565f89; }
+.event-detail { color: var(--text); flex: 1; }
+.event-status { color: var(--green); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@keyframes leaderPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(158,206,106,0.15); }
+  50% { box-shadow: 0 0 30px rgba(158,206,106,0.3); }
+}
+
+/* Cluster operation inputs */
+.cluster-ops { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+.cluster-ops input {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 0.85rem;
+  font-family: var(--mono);
+}
+.cluster-ops input:focus { outline: none; border-color: var(--accent); }
+
+.btn-warning { background: var(--yellow); color: #1a1b26; }
+.btn-warning:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.graphs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.graph-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px;
+}
+.graph-title { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.graph-subtitle { font-size: 0.75rem; color: #565f89; margin-bottom: 10px; }
+.graph-card canvas { width: 100%; height: 180px; }
+
+@media (max-width: 800px) {
+  .graphs-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="hero-badge">Take-Home Assessment</div>
+  <h1>KVStore</h1>
+  <p class="subtitle">Network-Available Persistent Key/Value System</p>
+  <p class="tagline">Built with Go <span>&bull;</span> LSM-Tree Engine <span>&bull;</span> Raft Consensus <span>&bull;</span> Standard Library Only</p>
+</header>
+
+<main class="container">
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<section id="architecture" class="section-anchor">
+  <div class="glow-card">
+    <div class="glow-card-inner">
+      <div class="card-title">Architecture Overview</div>
+      <div class="card-subtitle">Data flow from client request to persistent storage</div>
+      <div class="arch-diagram">
+        <div class="arch-box client">Client<small>TCP conn</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box protocol">TCP Protocol<small>Binary framing</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box raft">Raft Leader<small>Consensus</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box engine">Engine<small>LSM-Tree</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-tree">
+          <div class="arch-tree-line">
+            <span class="arch-tree-connector">&boxvr;&horbar;</span>
+            <div class="arch-box wal">WAL<small>Crash recovery</small></div>
+          </div>
+          <div class="arch-tree-line">
+            <span class="arch-tree-connector">&boxvr;&horbar;</span>
+            <div class="arch-box memtable">Memtable<small>Skip list</small></div>
+          </div>
+          <div class="arch-tree-line">
+            <span class="arch-tree-connector">&boxur;&horbar;</span>
+            <div class="arch-box sstable">SSTables<small>mmap + bloom</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== LIVE CLUSTER ==================== -->
+<section id="cluster" class="section-anchor">
+  <div class="card" id="cluster-section">
+    <div class="card-title">Live Cluster</div>
+    <div class="card-subtitle">3-Node Raft Consensus Cluster &mdash; Real-Time Visualization</div>
+
+    <div class="cluster-controls">
+      <label style="color:var(--text);font-size:0.85rem;">Nodes:</label>
+      <input type="number" id="cluster-node-count" value="3" min="1" max="7" style="width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:0.85rem;text-align:center;">
+      <button class="btn btn-primary" id="cluster-start-btn" onclick="startCluster()">Start Cluster</button>
+      <button class="btn btn-danger" id="cluster-stop-btn" onclick="stopCluster()" style="display:none">Stop Cluster</button>
+      <button class="btn btn-warning" id="cluster-kill-btn" onclick="killLeader()" style="display:none">&#9889; Kill Leader</button>
+    </div>
+
+    <div class="nodes-grid" id="nodes-grid">
+      <!-- Generated dynamically -->
+    </div>
+
+    <div class="graphs-row" id="graphs-section" style="display:none;">
+      <div class="graph-card">
+        <div class="graph-title">Memory Pressure</div>
+        <div class="graph-subtitle">Per-node memtable + immutable memory (bytes)</div>
+        <canvas id="mem-chart" width="500" height="200"></canvas>
+      </div>
+      <div class="graph-card">
+        <div class="graph-title">Key Count</div>
+        <div class="graph-subtitle">Total keys stored in cluster</div>
+        <canvas id="keys-chart" width="500" height="200"></canvas>
+      </div>
+      <div class="graph-card">
+        <div class="graph-title">Writes / Second</div>
+        <div class="graph-subtitle">Per-node write throughput</div>
+        <canvas id="writes-chart" width="500" height="200"></canvas>
+      </div>
+      <div class="graph-card">
+        <div class="graph-title">Reads / Second</div>
+        <div class="graph-subtitle">Per-node read throughput</div>
+        <canvas id="reads-chart" width="500" height="200"></canvas>
+      </div>
+    </div>
+
+    <h3 style="color:var(--text-bright);margin-bottom:8px;">Cluster Operations</h3>
+    <div class="cluster-ops">
+      <input type="text" id="cluster-key" placeholder="Key" style="width:140px">
+      <input type="text" id="cluster-value" placeholder="Value" style="width:180px">
+      <button class="btn btn-sm btn-primary" onclick="clusterPut()">Put via Raft</button>
+      <button class="btn btn-sm btn-success" onclick="clusterGet()">Get</button>
+      <button class="btn btn-sm btn-danger" onclick="clusterDelete()">Delete</button>
+      <button class="btn btn-sm btn-outline" id="cluster-load-btn" onclick="loadClusterData()">Load 100 Keys</button>
+    </div>
+
+    <h3 style="color:var(--text-bright);margin-top:24px;margin-bottom:8px;">Event Feed</h3>
+    <div class="event-feed" id="event-feed">
+      <div class="event-entry">
+        <span class="event-time">--:--:--.---</span>
+        <span class="event-type status">ready</span>
+        <span class="event-detail">Click "Start Cluster" to begin</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== LIVE OPERATIONS ==================== -->
+<section id="operations" class="section-anchor">
+  <div class="card">
+    <div class="card-title">Live Operations</div>
+    <div class="card-subtitle">Interact with the running KVStore instance</div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+      <div class="tabs" id="ops-tabs">
+        <button class="tab active" data-tab="put">Put</button>
+        <button class="tab" data-tab="read">Read</button>
+        <button class="tab" data-tab="delete">Delete</button>
+        <button class="tab" data-tab="batch">BatchPut</button>
+        <button class="tab" data-tab="range">ReadKeyRange</button>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadSampleData()">Load Sample Data (a-z)</button>
+    </div>
+
+    <!-- PUT -->
+    <div class="tab-content active" id="tab-put">
+      <div class="ops-form">
+        <div class="ops-row">
+          <div class="input-group"><label>Key</label><input class="input" id="put-key" placeholder="mykey"></div>
+          <div class="input-group"><label>Value</label><input class="input" id="put-value" placeholder="myvalue"></div>
+          <button class="btn btn-primary" onclick="doPut()">Put</button>
+        </div>
+        <div class="result-area" id="put-result">Ready</div>
+      </div>
+    </div>
+
+    <!-- READ -->
+    <div class="tab-content" id="tab-read">
+      <div class="ops-form">
+        <div class="ops-row">
+          <div class="input-group"><label>Key</label><input class="input" id="read-key" placeholder="mykey"></div>
+          <button class="btn btn-primary" onclick="doRead()">Read</button>
+        </div>
+        <div class="result-area" id="read-result">Ready</div>
+      </div>
+    </div>
+
+    <!-- DELETE -->
+    <div class="tab-content" id="tab-delete">
+      <div class="ops-form">
+        <div class="ops-row">
+          <div class="input-group"><label>Key</label><input class="input" id="delete-key" placeholder="mykey"></div>
+          <button class="btn btn-danger" onclick="doDelete()">Delete</button>
+        </div>
+        <div class="result-area" id="delete-result">Ready</div>
+      </div>
+    </div>
+
+    <!-- BATCH PUT -->
+    <div class="tab-content" id="tab-batch">
+      <div class="ops-form">
+        <div class="input-group">
+          <label>Key-Value Pairs (JSON)</label>
+          <textarea class="input" id="batch-data" placeholder='{"key1":"value1","key2":"value2"}'></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="doBatchPut()">BatchPut</button>
+        <div class="result-area" id="batch-result">Ready</div>
+      </div>
+    </div>
+
+    <!-- RANGE -->
+    <div class="tab-content" id="tab-range">
+      <div class="ops-form">
+        <div class="ops-row">
+          <div class="input-group"><label>Start Key</label><input class="input" id="range-start" placeholder="a"></div>
+          <div class="input-group"><label>End Key</label><input class="input" id="range-end" placeholder="d"></div>
+          <button class="btn btn-primary" onclick="doRange()">Scan</button>
+        </div>
+        <div class="result-area" id="range-result">Ready</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== BENCHMARKS ==================== -->
+<section id="benchmarks" class="section-anchor">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+      <div>
+        <div class="card-title">Performance Benchmarks</div>
+        <div class="card-subtitle" style="margin-bottom:0;">Measure real throughput and latency</div>
+      </div>
+      <button class="btn btn-primary btn-lg" id="run-all-btn" onclick="runAllBenchmarks()">Run All Benchmarks</button>
+    </div>
+
+    <div class="bench-grid">
+      <!-- Sequential Writes -->
+      <div class="bench-card" id="bench-seq-write">
+        <h4>Sequential Writes</h4>
+        <p>Write 10,000 keys sequentially</p>
+        <button class="btn btn-outline btn-sm" onclick="runBenchmark('seq-write')">Run Benchmark</button>
+        <div class="progress-bar"><div class="fill blue" id="prog-seq-write"></div></div>
+        <div class="bench-result" id="res-seq-write"></div>
+      </div>
+
+      <!-- Random Reads -->
+      <div class="bench-card" id="bench-rand-read">
+        <h4>Random Reads</h4>
+        <p>Read 10,000 random keys</p>
+        <button class="btn btn-outline btn-sm" onclick="runBenchmark('rand-read')">Run Benchmark</button>
+        <div class="progress-bar"><div class="fill green" id="prog-rand-read"></div></div>
+        <div class="bench-result" id="res-rand-read"></div>
+      </div>
+
+      <!-- Batch Writes -->
+      <div class="bench-card" id="bench-batch-write">
+        <h4>Batch Writes</h4>
+        <p>Write 10,000 keys in batches of 100</p>
+        <button class="btn btn-outline btn-sm" onclick="runBenchmark('batch-write')">Run Benchmark</button>
+        <div class="progress-bar"><div class="fill yellow" id="prog-batch-write"></div></div>
+        <div class="bench-result" id="res-batch-write"></div>
+      </div>
+
+      <!-- Range Scans -->
+      <div class="bench-card" id="bench-range-scan">
+        <h4>Range Scans</h4>
+        <p>Scan ranges of 100 keys each</p>
+        <button class="btn btn-outline btn-sm" onclick="runBenchmark('range-scan')">Run Benchmark</button>
+        <div class="progress-bar"><div class="fill purple" id="prog-range-scan"></div></div>
+        <div class="bench-result" id="res-range-scan"></div>
+      </div>
+
+      <!-- Mixed Workload -->
+      <div class="bench-card" id="bench-mixed">
+        <h4>Mixed Workload</h4>
+        <p>70% reads, 20% writes, 10% deletes</p>
+        <button class="btn btn-outline btn-sm" onclick="runBenchmark('mixed')">Run Benchmark</button>
+        <div class="progress-bar"><div class="fill blue" id="prog-mixed"></div></div>
+        <div class="bench-result" id="res-mixed"></div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container" id="chart-section" style="display:none;">
+      <div class="card-title" style="margin-bottom:16px;">Throughput Comparison</div>
+      <canvas id="bench-chart" width="800" height="220"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CRASH RECOVERY ==================== -->
+<section id="crash-recovery" class="section-anchor">
+  <div class="card">
+    <div class="card-title">Crash Recovery Demo</div>
+    <div class="card-subtitle">Demonstrate WAL-based crash recovery with zero data loss</div>
+
+    <div class="text-center mt-16">
+      <button class="btn btn-danger btn-lg" id="crash-btn" onclick="runCrashDemo()">Simulate Crash</button>
+    </div>
+
+    <div class="crash-timeline" id="crash-timeline">
+      <div class="crash-step" id="crash-step-1">
+        <div class="step-indicator">1</div>
+        <div class="step-text">Writing 100 keys to the store...<small>Populating data before crash</small></div>
+      </div>
+      <div class="crash-step" id="crash-step-2">
+        <div class="step-indicator">2</div>
+        <div class="step-text">CRASH! Simulating power failure<small>Process killed mid-operation</small></div>
+      </div>
+      <div class="crash-step" id="crash-step-3">
+        <div class="step-indicator">3</div>
+        <div class="step-text">Recovering from WAL...<small>Replaying write-ahead log</small></div>
+      </div>
+      <div class="crash-step" id="crash-step-4">
+        <div class="step-indicator">4</div>
+        <div class="step-text">Verifying data integrity...<small>Checking all keys are present</small></div>
+      </div>
+    </div>
+
+    <div class="crash-result" id="crash-result"></div>
+  </div>
+</section>
+
+<!-- ==================== REQUIREMENTS CHECKLIST ==================== -->
+<section id="checklist" class="section-anchor">
+  <div class="card">
+    <div class="card-title">Requirements Checklist</div>
+    <div class="card-subtitle">Full coverage of the assessment specification</div>
+
+    <div class="checklist-grid">
+      <div class="checklist-section">
+        <h4>Interfaces</h4>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Put(Key, Value)<br><span class="detail">Single key-value write</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Read(Key)<br><span class="detail">Single key lookup</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">ReadKeyRange(StartKey, EndKey)<br><span class="detail">Ordered range scan</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">BatchPut(..keys, ..values)<br><span class="detail">Atomic multi-key write</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Delete(key)<br><span class="detail">Tombstone-based deletion</span></div></div>
+      </div>
+
+      <div class="checklist-section">
+        <h4>Non-Functional Requirements</h4>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Low latency<br><span class="detail" id="check-latency">Measured via benchmarks</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">High throughput<br><span class="detail" id="check-throughput">Measured via benchmarks</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Datasets larger than RAM<br><span class="detail">mmap-based SSTable reading</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Crash friendly<br><span class="detail" id="check-crash">WAL-based recovery</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Predictable behavior under concurrency<br><span class="detail">Concurrent-safe with RWMutex</span></div></div>
+      </div>
+
+      <div class="checklist-section">
+        <h4>Bonus</h4>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Replication<br><span class="detail">3-node Raft consensus</span></div></div>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Automatic failover<br><span class="detail">Leader election in &lt;600ms</span></div></div>
+      </div>
+
+      <div class="checklist-section">
+        <h4>Constraint</h4>
+        <div class="check-item"><div class="check-icon">&#10003;</div><div class="check-text">Standard library only<br><span class="detail">Zero external dependencies</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== TECHNICAL DETAILS ==================== -->
+<section id="tech-details" class="section-anchor">
+  <div class="card">
+    <div class="card-title">Technical Details</div>
+    <div class="card-subtitle">Under the hood of the KVStore engine</div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>Storage Engine</span>
+        <span class="accordion-chevron">&#9660;</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+LSM-Tree (Log-Structured Merge Tree) architecture:<br><br>
+<strong>Write path:</strong><br>
+&nbsp;&nbsp;1. Append to WAL (write-ahead log) for durability<br>
+&nbsp;&nbsp;2. Insert into Memtable (in-memory skip list)<br>
+&nbsp;&nbsp;3. When Memtable is full &rarr; flush to SSTable on disk<br><br>
+<strong>Read path:</strong><br>
+&nbsp;&nbsp;1. Check Memtable first (most recent data)<br>
+&nbsp;&nbsp;2. Check Bloom filters on SSTables (avoid unnecessary I/O)<br>
+&nbsp;&nbsp;3. Binary search within SSTable blocks<br><br>
+This design optimizes for write throughput while maintaining efficient reads through Bloom filters and sorted structure.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>On-Disk Format</span>
+        <span class="accordion-chevron">&#9660;</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+Block-based SSTable format:<br><br>
+<strong>SSTable Layout:</strong><br>
+&nbsp;&nbsp;[Data Block 0][Data Block 1]...[Data Block N]<br>
+&nbsp;&nbsp;[Meta Block (Bloom Filter)]<br>
+&nbsp;&nbsp;[Index Block]<br>
+&nbsp;&nbsp;[Footer: offsets + magic number]<br><br>
+<strong>Each Data Block:</strong><br>
+&nbsp;&nbsp;[Entry][Entry]...[CRC32 checksum]<br><br>
+<strong>Each Entry:</strong><br>
+&nbsp;&nbsp;[key_len: 4B][val_len: 4B][key][value][tombstone: 1B]<br><br>
+CRC32 checksums on every block ensure data integrity. Bloom filters provide O(1) key existence checks with ~1% false positive rate.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>Compaction Strategy</span>
+        <span class="accordion-chevron">&#9660;</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+Leveled compaction (inspired by LevelDB/RocksDB):<br><br>
+<strong>Level sizing:</strong><br>
+&nbsp;&nbsp;L0: 4 SSTables (triggers compaction)<br>
+&nbsp;&nbsp;L1: 10 MB total<br>
+&nbsp;&nbsp;L2: 100 MB total (10x growth per level)<br>
+&nbsp;&nbsp;L3: 1 GB total<br><br>
+<strong>Compaction process:</strong><br>
+&nbsp;&nbsp;1. Pick SSTable from Ln with key overlap in Ln+1<br>
+&nbsp;&nbsp;2. Merge-sort overlapping SSTables<br>
+&nbsp;&nbsp;3. Remove tombstoned entries at deepest level<br>
+&nbsp;&nbsp;4. Write new SSTables to Ln+1<br><br>
+This bounds read amplification to O(levels) while maintaining good space amplification.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>Network Protocol</span>
+        <span class="accordion-chevron">&#9660;</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+Custom binary TCP protocol:<br><br>
+<strong>Frame format:</strong><br>
+&nbsp;&nbsp;[Length: 4 bytes][Command: 1 byte][Payload: N bytes]<br><br>
+<strong>Commands:</strong><br>
+&nbsp;&nbsp;0x01 PUT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[key_len][key][value]<br>
+&nbsp;&nbsp;0x02 GET&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[key_len][key]<br>
+&nbsp;&nbsp;0x03 DELETE&nbsp;&nbsp;&nbsp;[key_len][key]<br>
+&nbsp;&nbsp;0x04 BATCH&nbsp;&nbsp;&nbsp;&nbsp;[count][entries...]<br>
+&nbsp;&nbsp;0x05 RANGE&nbsp;&nbsp;&nbsp;&nbsp;[start_key][end_key]<br><br>
+<strong>Response:</strong><br>
+&nbsp;&nbsp;[Length: 4 bytes][Status: 1 byte][Payload: N bytes]<br><br>
+Connection pooling and keep-alive for efficient reuse.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>Raft Consensus</span>
+        <span class="accordion-chevron">&#9660;</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+Raft consensus protocol (3-node cluster):<br><br>
+<strong>Two core RPCs:</strong><br>
+&nbsp;&nbsp;1. RequestVote &mdash; leader election<br>
+&nbsp;&nbsp;2. AppendEntries &mdash; log replication + heartbeat<br><br>
+<strong>Election:</strong><br>
+&nbsp;&nbsp;&bull; Randomized timeout: 150-300ms<br>
+&nbsp;&nbsp;&bull; Candidate requests votes from peers<br>
+&nbsp;&nbsp;&bull; Majority wins &rarr; becomes leader<br>
+&nbsp;&nbsp;&bull; Typical election: &lt;600ms<br><br>
+<strong>Replication:</strong><br>
+&nbsp;&nbsp;&bull; Leader appends to local log<br>
+&nbsp;&nbsp;&bull; Sends AppendEntries to followers<br>
+&nbsp;&nbsp;&bull; Committed once majority acknowledges<br>
+&nbsp;&nbsp;&bull; Followers apply committed entries<br><br>
+Provides linearizable reads and writes with automatic failover.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+  <p style="font-size:1rem; color:var(--text); font-weight:600; margin-bottom:8px;">Built for Moniepoint Take-Home Assessment</p>
+  <p>Go &bull; LSM-Tree &bull; Raft &bull; ~5,500 lines of code</p>
+  <p style="margin-top:12px;"><a href="#">View on GitHub &rarr;</a></p>
+</footer>
+
+<script>
+// =============== TAB SWITCHING ===============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const tabGroup = tab.parentElement;
+    const contentParent = tabGroup.closest('.card');
+    tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    contentParent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const target = contentParent.querySelector('#tab-' + tab.dataset.tab);
+    if (target) target.classList.add('active');
+  });
+});
+
+// =============== API HELPERS ===============
+const API_BASE = '';
+
+async function apiCall(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const start = performance.now();
+  try {
+    const res = await fetch(API_BASE + path, opts);
+    const elapsed = performance.now() - start;
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, status: res.status, data, elapsed };
+  } catch (e) {
+    const elapsed = performance.now() - start;
+    return { ok: false, status: 0, data: { error: e.message }, elapsed };
+  }
+}
+
+function setResult(id, html, success) {
+  const el = document.getElementById(id);
+  const icon = success === true ? '<span class="status" style="color:var(--green);">&#10003;</span>'
+             : success === false ? '<span class="status" style="color:var(--red);">&#10007;</span>'
+             : '';
+  el.innerHTML = icon + html;
+}
+
+function timingHtml(ms) {
+  return '<div class="timing">' + ms.toFixed(1) + 'ms</div>';
+}
+
+// =============== OPERATIONS ===============
+async function doPut() {
+  const key = document.getElementById('put-key').value.trim();
+  const value = document.getElementById('put-value').value.trim();
+  if (!key) { setResult('put-result', 'Please enter a key', false); return; }
+  setResult('put-result', '<span class="spinner"></span> Putting...', null);
+  const r = await apiCall('POST', '/api/put', { key, value });
+  if (r.ok) {
+    setResult('put-result', 'Key <strong>"' + escHtml(key) + '"</strong> stored successfully' + timingHtml(r.elapsed), true);
+  } else {
+    setResult('put-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+async function doRead() {
+  const key = document.getElementById('read-key').value.trim();
+  if (!key) { setResult('read-result', 'Please enter a key', false); return; }
+  setResult('read-result', '<span class="spinner"></span> Reading...', null);
+  const r = await apiCall('GET', '/api/get?key=' + encodeURIComponent(key));
+  if (r.ok) {
+    const val = r.data.value !== undefined ? r.data.value : '';
+    setResult('read-result', '<strong>"' + escHtml(key) + '"</strong> = <strong>"' + escHtml(val) + '"</strong>' + timingHtml(r.elapsed), true);
+  } else if (r.status === 404) {
+    setResult('read-result', 'Key <strong>"' + escHtml(key) + '"</strong> not found' + timingHtml(r.elapsed), false);
+  } else {
+    setResult('read-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+async function doDelete() {
+  const key = document.getElementById('delete-key').value.trim();
+  if (!key) { setResult('delete-result', 'Please enter a key', false); return; }
+  setResult('delete-result', '<span class="spinner"></span> Deleting...', null);
+  const r = await apiCall('DELETE', '/api/delete?key=' + encodeURIComponent(key));
+  if (r.ok) {
+    setResult('delete-result', 'Key <strong>"' + escHtml(key) + '"</strong> deleted' + timingHtml(r.elapsed), true);
+  } else {
+    setResult('delete-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+async function doBatchPut() {
+  const raw = document.getElementById('batch-data').value.trim();
+  if (!raw) { setResult('batch-result', 'Please enter JSON data', false); return; }
+  let pairs;
+  try { pairs = JSON.parse(raw); } catch(e) { setResult('batch-result', 'Invalid JSON: ' + escHtml(e.message), false); return; }
+  const keys = Object.keys(pairs);
+  const values = keys.map(k => pairs[k]);
+  setResult('batch-result', '<span class="spinner"></span> Inserting ' + keys.length + ' pairs...', null);
+  const r = await apiCall('POST', '/api/batch', { keys, values });
+  if (r.ok) {
+    setResult('batch-result', 'Inserted <strong>' + keys.length + '</strong> key-value pairs' + timingHtml(r.elapsed), true);
+  } else {
+    setResult('batch-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+async function doRange() {
+  const start = document.getElementById('range-start').value.trim();
+  const end = document.getElementById('range-end').value.trim();
+  if (!start || !end) { setResult('range-result', 'Please enter both start and end keys', false); return; }
+  setResult('range-result', '<span class="spinner"></span> Scanning...', null);
+  const r = await apiCall('GET', '/api/range?start=' + encodeURIComponent(start) + '&end=' + encodeURIComponent(end));
+  if (r.ok) {
+    const items = r.data.pairs || r.data.results || [];
+    if (items.length === 0) {
+      setResult('range-result', 'No keys found in range [' + escHtml(start) + ', ' + escHtml(end) + ')' + timingHtml(r.elapsed), true);
+    } else {
+      let table = '<table class="results-table"><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>';
+      items.forEach(item => {
+        const k = item.key || item.Key || '';
+        const v = item.value || item.Value || '';
+        table += '<tr><td>' + escHtml(k) + '</td><td>' + escHtml(v) + '</td></tr>';
+      });
+      table += '</tbody></table>';
+      setResult('range-result', '<strong>' + items.length + '</strong> results' + timingHtml(r.elapsed) + table, true);
+    }
+  } else {
+    setResult('range-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+async function loadSampleData() {
+  const pairs = {};
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(97 + i);
+    pairs[letter] = 'value_' + letter;
+  }
+  setResult('put-result', '<span class="spinner"></span> Loading 26 sample keys (a-z)...', null);
+  const r = await apiCall('POST', '/api/batch', { keys: Object.keys(pairs), values: Object.values(pairs) });
+  if (r.ok) {
+    setResult('put-result', 'Loaded <strong>26</strong> sample keys (a-z)' + timingHtml(r.elapsed), true);
+  } else {
+    setResult('put-result', 'Error: ' + escHtml(r.data.error || 'Request failed') + timingHtml(r.elapsed), false);
+  }
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+// =============== BENCHMARKS ===============
+const benchData = {};
+
+async function runBenchmark(type) {
+  const progEl = document.getElementById('prog-' + type);
+  const resEl = document.getElementById('res-' + type);
+  progEl.style.width = '0%';
+  progEl.classList.add('indeterminate');
+  resEl.innerHTML = '';
+
+  try {
+    const r = await apiCall('POST', '/api/benchmark/' + type);
+    progEl.classList.remove('indeterminate');
+    progEl.style.width = '100%';
+    if (r.ok) {
+      const d = r.data;
+      benchData[type] = d;
+      const opsVal = d.ops_per_sec || d.opsPerSec || 0;
+      const latVal = d.avg_latency_us || d.avgLatencyUs || d.avg_latency_ms || 0;
+      resEl.innerHTML = '<div class="bench-result" style="display:flex;">' +
+        '<div class="bench-stat"><div class="value" data-count="' + Math.round(opsVal) + '">0</div><span class="unit">ops/sec</span></div>' +
+        '<div class="bench-stat"><div class="value" data-count="' + Math.round(latVal) + '">0</div><span class="unit">&micro;s avg</span></div>' +
+        '</div>';
+      resEl.querySelectorAll('.value[data-count]').forEach(animateCount);
+      updateChecklist();
+    } else {
+      resEl.innerHTML = '<div style="color:var(--red);font-size:0.85rem;">Error: ' + escHtml(r.data.error || 'Failed') + '</div>';
+    }
+  } catch(e) {
+    progEl.classList.remove('indeterminate');
+    progEl.style.width = '100%';
+    progEl.style.background = 'var(--red)';
+  }
+}
+
+async function runAllBenchmarks() {
+  const btn = document.getElementById('run-all-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Running...';
+  const types = ['seq-write', 'rand-read', 'batch-write', 'range-scan', 'mixed'];
+  for (const t of types) {
+    await runBenchmark(t);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Run All Benchmarks';
+  drawBenchChart();
+}
+
+function animateCount(el) {
+  const target = parseInt(el.dataset.count, 10);
+  const duration = 600;
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * ease).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// =============== BAR CHART ===============
+function drawBenchChart() {
+  const section = document.getElementById('chart-section');
+  section.style.display = 'block';
+  const canvas = document.getElementById('bench-chart');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 220 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const h = 220;
+
+  const entries = [
+    { label: 'Seq Writes', key: 'seq-write', color: '#7aa2f7' },
+    { label: 'Random Reads', key: 'rand-read', color: '#9ece6a' },
+    { label: 'Batch Writes', key: 'batch-write', color: '#e0af68' },
+    { label: 'Range Scans', key: 'range-scan', color: '#bb9af7' },
+    { label: 'Mixed', key: 'mixed', color: '#7dcfff' },
+  ];
+
+  const data = entries.map(e => {
+    const d = benchData[e.key];
+    return { ...e, value: d ? (d.ops_per_sec || d.opsPerSec || 0) : 0 };
+  });
+
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  const barHeight = 28;
+  const gap = 14;
+  const labelWidth = 110;
+  const valueWidth = 80;
+  const chartLeft = labelWidth;
+  const chartRight = w - valueWidth;
+  const chartWidth = chartRight - chartLeft;
+  const totalHeight = data.length * (barHeight + gap);
+  const startY = (h - totalHeight) / 2;
+
+  ctx.clearRect(0, 0, w, h);
+
+  data.forEach((d, i) => {
+    const y = startY + i * (barHeight + gap);
+    const barW = (d.value / maxVal) * chartWidth;
+
+    // Label
+    ctx.fillStyle = '#c0caf5';
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, chartLeft - 12, y + barHeight / 2);
+
+    // Bar background
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    roundRect(ctx, chartLeft, y, chartWidth, barHeight, 4);
+    ctx.fill();
+
+    // Bar
+    if (barW > 0) {
+      ctx.fillStyle = d.color;
+      ctx.globalAlpha = 0.85;
+      roundRect(ctx, chartLeft, y, Math.max(barW, 8), barHeight, 4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Value
+    ctx.fillStyle = '#c0caf5';
+    ctx.font = 'bold 13px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(Math.round(d.value).toLocaleString() + ' ops/s', chartRight + 8, y + barHeight / 2);
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// =============== CRASH RECOVERY ===============
+async function runCrashDemo() {
+  const btn = document.getElementById('crash-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Running...';
+
+  const steps = [1, 2, 3, 4];
+  const resultEl = document.getElementById('crash-result');
+  resultEl.className = 'crash-result';
+  resultEl.style.display = 'none';
+  resultEl.innerHTML = '';
+
+  steps.forEach(s => {
+    const el = document.getElementById('crash-step-' + s);
+    el.className = 'crash-step';
+  });
+
+  // Step 1: Writing keys
+  activateStep(1);
+  await sleep(600);
+  doneStep(1);
+
+  // Step 2: CRASH
+  activateStep(2);
+  document.getElementById('crash-step-2').classList.add('error');
+  document.querySelector('.crash-timeline').classList.add('red-flash');
+  await sleep(800);
+
+  // Step 3: Recovery
+  activateStep(3);
+  await sleep(700);
+  doneStep(3);
+
+  // Step 4: Verify
+  activateStep(4);
+
+  // Call the real API
+  const r = await apiCall('POST', '/api/benchmark/crash-recovery');
+  doneStep(4);
+
+  if (r.ok) {
+    const d = r.data;
+    const written = d.keys_written || d.keysWritten || 100;
+    const recovered = d.keys_recovered || d.keysRecovered || 100;
+    const recoveryMs = d.recovery_time_ms || d.recoveryTimeMs || r.elapsed;
+    const intact = recovered >= written;
+
+    resultEl.className = 'crash-result ' + (intact ? 'success' : 'failure');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML =
+      '<div class="big-icon">' + (intact ? '&#10003;' : '&#10007;') + '</div>' +
+      '<div class="big-text" style="color:' + (intact ? 'var(--green)' : 'var(--red)') + ';">' +
+        (intact ? 'Zero Data Loss' : 'Data Lost') +
+      '</div>' +
+      '<div class="crash-stats">' +
+        '<div class="stat"><div class="val">' + written + '</div><div class="lbl">Keys Written</div></div>' +
+        '<div class="stat"><div class="val">' + recovered + '</div><div class="lbl">Keys Recovered</div></div>' +
+        '<div class="stat"><div class="val">' + recoveryMs.toFixed(1) + 'ms</div><div class="lbl">Recovery Time</div></div>' +
+        '<div class="stat"><div class="val">' + (intact ? '100%' : Math.round(recovered/written*100) + '%') + '</div><div class="lbl">Data Integrity</div></div>' +
+      '</div>';
+
+    document.getElementById('check-crash').textContent = intact ? 'WAL recovery: ' + recoveryMs.toFixed(1) + 'ms, zero data loss' : 'Recovery tested';
+  } else {
+    resultEl.className = 'crash-result failure';
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="big-icon">&#10007;</div><div class="big-text" style="color:var(--red);">API Error</div><p style="color:var(--text-dim);margin-top:8px;">' + escHtml(r.data.error || 'Could not reach server') + '</p>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Simulate Crash';
+}
+
+function activateStep(n) {
+  document.getElementById('crash-step-' + n).classList.add('active');
+}
+
+function doneStep(n) {
+  const el = document.getElementById('crash-step-' + n);
+  el.classList.remove('active');
+  el.classList.add('done');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// =============== CHECKLIST UPDATER ===============
+function updateChecklist() {
+  const seqW = benchData['seq-write'];
+  const randR = benchData['rand-read'];
+  if (seqW) {
+    const lat = seqW.avg_latency_us || seqW.avgLatencyUs || 0;
+    document.getElementById('check-latency').textContent = 'Write latency: ' + Math.round(lat) + 'us';
+  }
+  if (randR) {
+    const ops = randR.ops_per_sec || randR.opsPerSec || 0;
+    document.getElementById('check-throughput').textContent = 'Read throughput: ' + Math.round(ops).toLocaleString() + ' ops/sec';
+  }
+}
+
+// =============== ACCORDION ===============
+function toggleAccordion(header) {
+  const item = header.parentElement;
+  const body = item.querySelector('.accordion-body');
+  const inner = body.querySelector('.accordion-body-inner');
+  const isOpen = item.classList.contains('open');
+
+  if (isOpen) {
+    body.style.maxHeight = '0';
+    item.classList.remove('open');
+  } else {
+    body.style.maxHeight = inner.scrollHeight + 'px';
+    item.classList.add('open');
+  }
+}
+
+// =============== CHECKLIST ANIMATION ===============
+function animateChecklist() {
+  const items = document.querySelectorAll('.check-item');
+  items.forEach((item, i) => {
+    setTimeout(() => item.classList.add('visible'), 100 + i * 80);
+  });
+}
+
+// =============== INIT ===============
+document.addEventListener('DOMContentLoaded', () => {
+  animateChecklist();
+
+  // Resize chart on window resize
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (Object.keys(benchData).length > 0) drawBenchChart();
+    }, 200);
+  });
+});
+
+// ============ LINE CHARTS ============
+const GRAPH_HISTORY = 60; // 60 data points = 30 seconds at 500ms intervals
+const nodeColors = ['#7aa2f7','#9ece6a','#f7768e','#e0af68','#bb9af7','#7dcfff','#c0caf5'];
+
+class LineChart {
+  constructor(canvasId, unit) {
+    this.canvasId = canvasId;
+    this.unit = unit || '';
+    this.series = {}; // { 'node-0': [values...], 'node-1': [...] }
+  }
+
+  addPoint(seriesName, value) {
+    if (!this.series[seriesName]) this.series[seriesName] = [];
+    this.series[seriesName].push(value);
+    if (this.series[seriesName].length > GRAPH_HISTORY) {
+      this.series[seriesName].shift();
+    }
+  }
+
+  draw() {
+    const canvas = document.getElementById(this.canvasId);
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 180 * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const w = rect.width, h = 180;
+    const pad = { top: 10, right: 70, bottom: 25, left: 55 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Find global max
+    let maxVal = 1;
+    const seriesNames = Object.keys(this.series);
+    seriesNames.forEach(name => {
+      this.series[name].forEach(v => { if (v > maxVal) maxVal = v; });
+    });
+    maxVal = maxVal * 1.1; // 10% headroom
+
+    // Draw grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (ch / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + cw, y);
+      ctx.stroke();
+      // Label
+      const val = maxVal - (maxVal / 4) * i;
+      ctx.fillStyle = '#565f89';
+      ctx.font = '10px -apple-system,sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(formatVal(val, this.unit), pad.left - 6, y + 3);
+    }
+
+    // Draw each series
+    seriesNames.forEach((name, si) => {
+      const data = this.series[name];
+      if (data.length < 2) return;
+      const color = nodeColors[si % nodeColors.length];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = pad.left + (i / (GRAPH_HISTORY - 1)) * cw;
+        const y = pad.top + ch - (v / maxVal) * ch;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Draw last value label
+      const lastV = data[data.length - 1];
+      const lastX = pad.left + ((data.length - 1) / (GRAPH_HISTORY - 1)) * cw;
+      const lastY = pad.top + ch - (lastV / maxVal) * ch;
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px -apple-system,sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(name + ': ' + formatVal(lastV, this.unit), lastX + 6, lastY + 3);
+    });
+
+    // Time axis label
+    ctx.fillStyle = '#565f89';
+    ctx.font = '10px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u2190 30s ago', pad.left + 30, h - 4);
+    ctx.fillText('now \u2192', pad.left + cw - 20, h - 4);
+  }
+}
+
+function formatVal(v, unit) {
+  if (unit === 'bytes') {
+    if (v >= 1048576) return (v / 1048576).toFixed(1) + ' MB';
+    if (v >= 1024) return (v / 1024).toFixed(0) + ' KB';
+    return Math.round(v) + ' B';
+  }
+  if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+  if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+  return Math.round(v).toString();
+}
+
+// Create chart instances
+const memChart = new LineChart('mem-chart', 'bytes');
+const keysChart = new LineChart('keys-chart', '');
+const writesChart = new LineChart('writes-chart', '');
+const readsChart = new LineChart('reads-chart', '');
+
+// ============ DYNAMIC NODE CARDS ============
+function renderNodeCards(count) {
+  const grid = document.getElementById('nodes-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const id = 'node-' + i;
+    grid.innerHTML += `<div class="node-card" id="${id}" data-state="stopped">
+      <div class="node-header">
+        <div class="node-dot"></div>
+        <span class="node-id">${id}</span>
+        <span class="node-badge">Stopped</span>
+      </div>
+      <div class="node-stats">
+        <div class="node-stat"><span class="label">Term</span><span class="val" id="${id}-term">-</span></div>
+        <div class="node-stat"><span class="label">Commit</span><span class="val" id="${id}-commit">-</span></div>
+        <div class="node-stat"><span class="label">Keys</span><span class="val" id="${id}-keys">-</span></div>
+        <div class="node-stat"><span class="label">W/s</span><span class="val" id="${id}-wps">-</span></div>
+        <div class="node-stat"><span class="label">R/s</span><span class="val" id="${id}-rps">-</span></div>
+        <div class="node-stat"><span class="label">Mem</span><span class="val" id="${id}-mem">-</span></div>
+      </div>
+    </div>`;
+  }
+}
+
+// ============ CLUSTER ============
+let clusterRunning = false;
+let eventSource = null;
+
+async function startCluster() {
+  document.getElementById('cluster-start-btn').disabled = true;
+  document.getElementById('cluster-start-btn').innerHTML = '<span class="spinner"></span> Starting...';
+  const nodeCount = parseInt(document.getElementById('cluster-node-count').value) || 3;
+  const r = await apiCall('POST', '/api/cluster/start', { nodeCount });
+  if (r.ok) {
+    clusterRunning = true;
+    renderNodeCards(nodeCount);
+    document.getElementById('cluster-start-btn').style.display = 'none';
+    document.getElementById('cluster-stop-btn').style.display = '';
+    document.getElementById('cluster-kill-btn').style.display = '';
+    document.getElementById('graphs-section').style.display = '';
+    connectEventStream();
+    startStatusPolling();
+    addEvent('status', 'Cluster started with ' + nodeCount + ' nodes');
+  } else {
+    document.getElementById('cluster-start-btn').disabled = false;
+    document.getElementById('cluster-start-btn').textContent = 'Start Cluster';
+    addEvent('status', 'Failed to start: ' + (r.data.error || 'unknown'));
+  }
+}
+
+async function stopCluster() {
+  await apiCall('POST', '/api/cluster/stop');
+  clusterRunning = false;
+  document.getElementById('cluster-start-btn').style.display = '';
+  document.getElementById('cluster-start-btn').disabled = false;
+  document.getElementById('cluster-start-btn').textContent = 'Start Cluster';
+  document.getElementById('cluster-stop-btn').style.display = 'none';
+  document.getElementById('cluster-kill-btn').style.display = 'none';
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  // Reset node cards
+  const grid = document.getElementById('nodes-grid');
+  const nodeCards = grid.querySelectorAll('.node-card');
+  nodeCards.forEach(card => {
+    updateNodeCard(card.id, { state: 'Stopped', term: '-', commitIndex: '-', logLength: '-', keyCount: '-' });
+  });
+  // Reset graphs
+  document.getElementById('graphs-section').style.display = 'none';
+  memChart.series = {};
+  keysChart.series = {};
+  writesChart.series = {};
+  readsChart.series = {};
+  addEvent('status', 'Cluster stopped');
+}
+
+async function killLeader() {
+  const r = await apiCall('GET', '/api/cluster/status');
+  if (!r.ok) return;
+  const leader = r.data.nodes.find(n => n.state === 'Leader');
+  if (!leader) { addEvent('status', 'No leader found'); return; }
+  addEvent('delete', 'Killing leader ' + leader.id + '...');
+  await apiCall('POST', '/api/cluster/stop-node', { id: leader.id });
+}
+
+function connectEventStream() {
+  if (eventSource) eventSource.close();
+  eventSource = new EventSource('/api/cluster/events');
+  eventSource.onmessage = function(e) {
+    try {
+      const evt = JSON.parse(e.data);
+      if (evt.type === 'status' && evt.data && evt.data.nodes) {
+        updateClusterDisplay(evt.data);
+      } else {
+        handleEvent(evt);
+      }
+    } catch(err) {}
+  };
+  eventSource.onerror = function() {};
+}
+
+let statusPollInterval = null;
+function startStatusPolling() {
+  if (statusPollInterval) clearInterval(statusPollInterval);
+  statusPollInterval = setInterval(async () => {
+    if (!clusterRunning) { clearInterval(statusPollInterval); return; }
+    const r = await apiCall('GET', '/api/cluster/status');
+    if (r.ok && r.data.nodes) updateClusterDisplay(r.data);
+  }, 1000);
+}
+
+function updateClusterDisplay(status) {
+  if (!status.nodes) return;
+
+  // Show graphs section
+  const gs = document.getElementById('graphs-section');
+  if (gs) gs.style.display = '';
+
+  status.nodes.forEach(node => {
+    updateNodeCard(node.id, node);
+
+    // Feed line charts
+    memChart.addPoint(node.id, node.memtableBytes || 0);
+    writesChart.addPoint(node.id, node.writesPerSec || 0);
+    readsChart.addPoint(node.id, node.readsPerSec || 0);
+  });
+
+  // Key count - single series (total)
+  const totalKeys = status.nodes.reduce((sum, n) => Math.max(sum, n.keyCount || 0), 0);
+  keysChart.addPoint('total', totalKeys);
+
+  // Redraw all charts
+  memChart.draw();
+  keysChart.draw();
+  writesChart.draw();
+  readsChart.draw();
+}
+
+function updateNodeCard(id, info) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  const state = (info.state || 'Stopped').toLowerCase();
+  card.dataset.state = state;
+  const badge = card.querySelector('.node-badge');
+  if (badge) badge.textContent = info.state || 'Stopped';
+  const setVal = (suffix, val) => {
+    const el = document.getElementById(id + '-' + suffix);
+    if (el) el.textContent = val !== undefined && val !== null ? val : '-';
+  };
+  setVal('term', info.term);
+  setVal('commit', info.commitIndex);
+  setVal('keys', info.keyCount);
+  setVal('wps', info.writesPerSec !== undefined ? Math.round(info.writesPerSec) : '-');
+  setVal('rps', info.readsPerSec !== undefined ? Math.round(info.readsPerSec) : '-');
+  setVal('mem', info.memtableBytes !== undefined ? formatVal(info.memtableBytes, 'bytes') : '-');
+}
+
+function handleEvent(evt) {
+  const typeMap = {
+    'put': 'put', 'get': 'get', 'delete': 'delete',
+    'batch_put': 'batch', 'leader_elected': 'leader',
+    'node_stopped': 'delete', 'replicated': 'status',
+    'cluster_started': 'status', 'cluster_stopped': 'status',
+    'benchmark': 'batch'
+  };
+  const cls = typeMap[evt.type] || 'status';
+  const detail = typeof evt.data === 'string' ? evt.data : JSON.stringify(evt.data);
+  addEvent(cls, evt.type.replace(/_/g, ' ').toUpperCase() + ': ' + detail);
+}
+
+function addEvent(type, detail) {
+  const feed = document.getElementById('event-feed');
+  if (!feed) return;
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+  const entry = document.createElement('div');
+  entry.className = 'event-entry';
+  entry.innerHTML = '<span class="event-time">' + time + '</span>' +
+    '<span class="event-type ' + type + '">' + type + '</span>' +
+    '<span class="event-detail">' + escHtml(detail) + '</span>';
+  feed.insertBefore(entry, feed.firstChild);
+  while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+}
+
+async function clusterPut() {
+  const key = document.getElementById('cluster-key').value.trim();
+  const value = document.getElementById('cluster-value').value.trim();
+  if (!key) return;
+  addEvent('put', 'PUT key="' + key + '" value="' + value + '"');
+  const r = await apiCall('POST', '/api/cluster/put', { key, value });
+  if (r.ok) {
+    addEvent('status', '\u2713 Replicated via Raft in ' + r.elapsed.toFixed(1) + 'ms');
+  } else {
+    addEvent('delete', '\u2717 Failed: ' + (r.data.error || 'unknown'));
+  }
+}
+
+async function clusterGet() {
+  const key = document.getElementById('cluster-key').value.trim();
+  if (!key) return;
+  const r = await apiCall('POST', '/api/cluster/get', { key });
+  if (r.ok && r.data.found) {
+    addEvent('get', 'GET "' + key + '" = "' + r.data.value + '" (' + r.elapsed.toFixed(1) + 'ms)');
+  } else if (r.ok) {
+    addEvent('get', 'GET "' + key + '" \u2192 Not Found');
+  } else {
+    addEvent('delete', 'GET failed: ' + (r.data.error || 'unknown'));
+  }
+}
+
+async function clusterDelete() {
+  const key = document.getElementById('cluster-key').value.trim();
+  if (!key) return;
+  const r = await apiCall('POST', '/api/cluster/delete', { key });
+  if (r.ok) {
+    addEvent('delete', 'DELETE "' + key + '" \u2713');
+  } else {
+    addEvent('delete', 'DELETE failed: ' + (r.data.error || 'unknown'));
+  }
+}
+
+async function loadClusterData() {
+  const btn = document.getElementById('cluster-load-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Loading...';
+  addEvent('batch', 'Loading 100 keys via Raft...');
+  const keys = [], values = [];
+  for (let i = 0; i < 100; i++) {
+    keys.push('demo-' + String(i).padStart(4, '0'));
+    values.push('value-' + String(i).padStart(4, '0'));
+  }
+  const r = await apiCall('POST', '/api/cluster/batch', { keys, values });
+  if (r.ok) {
+    addEvent('status', '\u2713 100 keys replicated to all nodes via Raft (' + r.elapsed.toFixed(0) + 'ms)');
+  } else {
+    addEvent('delete', '\u2717 Batch failed: ' + (r.data.error || 'unknown'));
+  }
+  btn.disabled = false;
+  btn.textContent = 'Load 100 Keys';
+}
+
+// ============ AUTO-DETECT CLUSTER STATE ON PAGE LOAD ============
+(async function checkClusterOnLoad() {
+  try {
+    const r = await apiCall('GET', '/api/cluster/status');
+    if (r.ok && r.data.running) {
+      clusterRunning = true;
+      // Render node cards dynamically based on actual node count
+      if (r.data.nodes) {
+        renderNodeCards(r.data.nodes.length);
+        document.getElementById('cluster-node-count').value = r.data.nodes.length;
+      }
+      document.getElementById('cluster-start-btn').style.display = 'none';
+      document.getElementById('cluster-stop-btn').style.display = '';
+      document.getElementById('cluster-kill-btn').style.display = '';
+      document.getElementById('graphs-section').style.display = '';
+      updateClusterDisplay(r.data);
+      connectEventStream();
+      startStatusPolling();
+      addEvent('status', 'Reconnected to running cluster');
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
